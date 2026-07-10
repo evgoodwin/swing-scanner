@@ -94,8 +94,14 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("**Earnings Data (Finnhub)**")
+    _fh_default = FINNHUB_API_KEY
+    if not _fh_default:
+        try:
+            _fh_default = st.secrets.get("FINNHUB_API_KEY", "")
+        except Exception:
+            _fh_default = ""
     fh_key = st.text_input("Finnhub API Key",
-                           value=FINNHUB_API_KEY,
+                           value=_fh_default,
                            type="password",
                            placeholder="Paste key from finnhub.io (free)",
                            help="Free key from finnhub.io — enables upcoming earnings column. Leave blank to skip.")
@@ -460,11 +466,59 @@ if st.session_state.results is not None:
             # Save display-ready table for export (matches screen exactly)
             st.session_state.display_df = d.reset_index()  # Ticker back as column
 
-            st.dataframe(style,
+            tbl_event = st.dataframe(style,
                          column_config=_stocks_col_config(),
-                         use_container_width=True,
+                         width="stretch",
                          hide_index=False,   # Ticker index always visible on left
-                         height=tbl_height)
+                         height=tbl_height,
+                         on_select="rerun",
+                         selection_mode="multi-row",
+                         key="stocks_tbl")
+
+            # ── Phase 2.5: scan → plan handoff ────────────────────
+            _sel = []
+            try:
+                _sel = list(tbl_event.selection.rows)
+            except Exception:
+                _sel = []
+            if _sel:
+                def _g(row, col):
+                    try:
+                        v = float(row[col])
+                        return v if np.isfinite(v) else None
+                    except Exception:
+                        return None
+
+                def _handoff_for(tkr):
+                    _raw = results[results["ticker"] == tkr]
+                    _raw = _raw.iloc[0] if not _raw.empty else None
+                    return {
+                        "symbol":    tkr,
+                        "price":     _g(_raw, "price")     if _raw is not None else None,
+                        "sma50":     _g(_raw, "sma_50")    if _raw is not None else None,
+                        "hma90":     _g(_raw, "hma_90")    if _raw is not None else None,
+                        "sma200":    _g(_raw, "sma_200")   if _raw is not None else None,
+                        "ema8":      _g(_raw, "ema_8")     if _raw is not None else None,
+                        "ema20":     _g(_raw, "ema_20")    if _raw is not None else None,
+                        "rs_pct":    _g(_raw, "rs_pct")    if _raw is not None else None,
+                        "earn_days": _g(_raw, "earn_days") if _raw is not None else None,
+                        "sector":    (str(_raw["sector"]) if _raw is not None
+                                      and "sector" in _raw.index else ""),
+                        "benchmark": benchmark,
+                    }
+
+                _tickers = [str(d.index[i]) for i in _sel][:6]
+                st.markdown("**Selected for planning** — click to open in "
+                            "Trade Plan (pre-filled):")
+                _bcols = st.columns(max(len(_tickers), 1))
+                for _i, _tkr in enumerate(_tickers):
+                    if _bcols[_i].button(f"🎯 {_tkr}", type="primary",
+                                         key=f"planbtn_{_tkr}"):
+                        st.session_state["plan_handoff"] = _handoff_for(_tkr)
+                        st.switch_page("pages/2_Trade_Plan.py")
+                if len(_sel) > 6:
+                    st.caption(f"{len(_sel)} rows selected — showing first 6. "
+                               "Plan these, then select the next batch.")
 
     # ── SECTORS TAB ───────────────────────────────────────────────
     with tab_sectors:
