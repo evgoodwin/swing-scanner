@@ -1,0 +1,276 @@
+# =====================================================================
+# mtg_core@1.2 — machine-readable ruleset (MTG-Core + MTG-Practice)
+# Built from: MTG-Core Rulebook v1.1, signed by Deron Wagner (Section A and
+#   decisions, 26 Sep 2026) and Rick Pedicelli (Section B, 24 Sep 2026),
+#   plus Deron's rulings of 29 Sep 2026 (Engine Findings, "Decision on call").
+# Contract: v2.1 (mtg-platform contracts/). Engine endpoint 127.0.0.1:8791.
+# Replaces: MTG-Core-1 (mtg_core_ruleset_v1_1.yaml). Change list: CHANGELOG_v1_2.md
+#
+# Tiers never mix:
+#   core      = TradeQuest course rules (Section A). The only rules that block
+#               or score. Every block cites rule_id + source_ref.
+#   practice  = Wagner Daily trading-room guidance (Section B, Rick). Shown as
+#               guidance, never scored. Promoted to core only by Deron.
+#   personal  = a trader's own overlays. NOT in this file, never in /scan.
+#
+# status values:
+#   SIGNED            approved as written
+#   SIGNED-AMENDED    approved with the signer's amendment (the amendment is the rule)
+#   RULED-29SEP       decided by Deron on 29 Sep
+#   ENGINE-CONVENTION how the engine applies a signed rule where the sheet is silent;
+#                     listed in the change list for Deron to confirm
+#   PENDING-RULING    needs a decision before it can block; guidance until then
+#   GUIDANCE          informational, never blocks
+#   SCRIPT-SOURCED    number taken from the lesson script where the signed sheet names the rule but not the number
+# script_check (course scripts received 30 Sep):
+#   verified       the number was found in the master lesson script
+#   departs        the signed rule deliberately differs from the script (see change list)
+#   not_yet        not traced yet (full trace is the Phase 2 corpus check)
+#   not_in_scripts the source is not a lesson script (cheat sheet, PDF, notes)
+# =====================================================================
+ruleset:
+  id: mtg_core@1.2
+  supersedes: MTG-Core-1
+  signed_rulebook: MTG-Core Rulebook v1.1 (Deron 2026-09-26, Rick 2026-09-24)
+  rulings: Engine Findings v3, Deron decisions 2026-09-29
+  contract: v2.1
+  scope: {markets: [equity, etf], crypto: "PENDING (crypto decision, UX test D3; not rule D-3)", directions: [long, short]}
+  immutability: once a ruleset id is referenced by a logged check, any edit creates a new id
+
+# ---------------------------------------------------------------------
+# Engine conventions (how signed rules are applied). Deron to confirm.
+# ---------------------------------------------------------------------
+conventions:
+  rounding:
+    shares: floor to whole units (equity, etf)
+    quantity_crypto: PENDING (v2.2 item 2 — floor to the asset's step, 6 decimals proposed)
+    money_and_percent: round half-up to 2 decimals, outputs only
+    risk_pct_for_sizing: unrounded (A-grade x size_factor, e.g. 0.375%); risk_pct_used reported rounded   # review item 15, case P09
+    heat_vs_limit: compared unrounded; current_pct and after_pct reported rounded
+    prices: never rounded (entry, stop, fill, targets keep full precision)   # I-178
+    arithmetic: decimal, not binary floating point
+  evaluation_time:
+    now: request.as_of_now if present (v2.2 item 1), else the server clock in America/New_York
+  timing_call_current:                     # D-2, vector 011; ruled 29 Sep
+    rule: call.as_of >= previous NYSE trading day of today (ET)
+    calendar: NYSE full-day closures from an exchange-calendar library (early closes count as trading days)
+    stale_or_missing: treated as no call -> NO_TIMING_CALL; heat limit min(personal, 5)
+    status: RULED-29SEP
+  verdict_precedence:                      # most severe first; blocks before warns
+    order: [STOP_PENDING, NO_TIMING_CALL, WAIT_MODE, STAGE_INVALID, EARNINGS_IN_HOLD,
+            POSITION_LIMIT, SECTOR_LIMIT, HEAT_LIMIT, EXIT_PLAN_INCOMPLETE, OVERSIZED]
+    every_rule_that_fires_is_listed: true
+    shares_zero_when_any_block: true
+    status: ENGINE-CONVENTION
+  severity:                                # M4-L4-S2; ruled 29 Sep
+    computed_only_when: published call is wait
+    dominant_index: ^IXIC (Nasdaq Composite) every day for v1.2   # ruled 29 Sep
+    severe: dominant index closes below its 50-day moving average AND 5+ distribution days in the past 5 weeks (A-1 definition)
+    ma50_type: SMA proposed (course M4-L4 says 'fifty-day moving average'; the RYG sheet says EMA) — convention to confirm
+    light: wait, and the severe test is not met — including Rick's Wait with the index above its 20 EMA (I-173)
+    status: RULED-29SEP (severe definition); ENGINE-CONVENTION (light catch-all)
+  market_facts_store:                      # ruled 29 Sep, item 5
+    holds: [stage, moving averages, next earnings date, index state, scan results]
+    never_holds: member data
+    refreshed_by: scheduled scan after the close
+    result_field: engine_data_as_of
+
+# ---------------------------------------------------------------------
+# Market timing (Section A, Core)
+# ---------------------------------------------------------------------
+timing:
+  model: binary                            # D-2
+  states: [buy, wait]                      # "Wait/Sell"; no Yellow, no exposure %
+  published_by: Rick's tracker (daily recap after launch); the engine computes severity only
+  rules:
+    A-1:  {title: Distribution day, params: {index_loss_pct_min: 0.2, volume: higher_than_prior_day},
+           source_ref: RYG cheat sheet, tier: core, status: SIGNED, script_check: not_in_scripts}
+    A-2:  {title: Out of Buy Mode, params: {distribution_days_min: 5, window_weeks: 5},
+           note: "Buy Mode = 4 or fewer in 5 weeks. Replaces the cheat sheet's 5+ in 4 wks / 6+ in 3 wks.",
+           source_ref: M4-L4-S2, tier: core, status: SIGNED-AMENDED, script_check: verified}
+    A-2b: {title: Wait/Sell severity, params: {light: "dominant index below 20-day EMA -> pause new entries",
+           severe: "below 50-day with heavy distribution -> exit"}, source_ref: M4-L4-S2,
+           tier: core, status: SIGNED-AMENDED, script_check: verified}
+    A-2c: {title: Back to Buy Mode, sequence: ["reversal off lows (low becomes support)", "follow-through day per C-2",
+           "no distribution day within 3-5 days after it", "leaders within 15-20% of 52-week highs (40-55% after a deep correction)"],
+           source_ref: [RYG cheat sheet, M4-L4-S2-V], tier: core, status: SIGNED, script_check: not_yet}
+    A-2d: {title: New entries by state, params: {buy: all Core setups, wait: no new long entries},
+           applies_to: long, note: "Shorts are not blocked by A-2d (ruled 29 Sep; vectors 006, 010).",
+           verdict: WAIT_MODE, severity: block, source_ref: M4-L4-S2-V, tier: core, status: SIGNED-AMENDED, script_check: verified}
+    A-2e: {title: Exits by state, params: {buy: standard trails and targets, wait_light: tighter trails, wait_severe: exit},
+           note: "Distribution can shorten the planned hold.", enforcement: "guidance (message text on severe)",
+           source_ref: [M4-L2-S3-P, M4-L2-S2-V], tier: core, status: SIGNED-AMENDED, script_check: not_yet}
+    C-2:  {title: Follow-through day, params: {gain_pct_min: 1.5, volume: higher_than_prior_day,
+           valid_from_day: 4, upper_bound: none, strongest_days: [4, 7]},
+           note: "Course M4-L4 says day 4-7 with a 25% volume increase; dropped (I-184).",
+           source_ref: [RYG cheat sheet, M4-L4-S2-V, Follow-through day PDF], tier: core, status: SIGNED-AMENDED, script_check: departs}
+    C-5:  {title: Timing call recorded daily, params: {record: [date, state, published_at, source]},
+           note: "Backfill and validate from the Wagner Daily archive (Phase 2).", tier: core, status: SIGNED-AMENDED}
+    D-2:  {title: No current timing call, verdict: NO_TIMING_CALL, severity: block,
+           note: "Missing data, never logged as Wait Mode. Citation as in contract vector 011.", source_ref: M4-L4-S2-V, tier: core, status: RULED-29SEP}
+    D-9:  {title: Benchmarks, params: {stocks: [SPY, QQQ, IWM, MAGS], dominant_index: Nasdaq Composite,
+           crypto: [BTC, ETH], crypto_rule: whichever is leading}, note: "No DIA.", source_ref: [RYG cheat sheet, M4-L4-S2],
+           tier: core, status: SIGNED-AMENDED}
+
+# ---------------------------------------------------------------------
+# Setups (Core). Long only. Pattern detection lands with the scanner (14 Oct).
+# ---------------------------------------------------------------------
+setups:
+  core_types: [base_breakout, bull_flag, pullback_in_uptrend, first_pullback, shakeout]    # D-1
+  base_types: [flat_base, cup_and_handle, double_bottom]                                    # kinds of base_breakout
+  practice_types: [high_tight_flag]
+  bases:
+    min_weeks: {stocks: 5, crypto: 4}
+    ideal_weeks_stocks: [8, 12]
+    shorter_than_min: consolidation, not a base
+    source_ref: [M2-L5, M3-L3-S1, M3-L3-S2]
+    status: SIGNED-AMENDED
+    script_check: "verified (M3-L3)"
+  rules:
+    A-3:  {title: Base Breakout, params: {base_min_weeks: 5, breakout_volume_vs_50d: 1.5, entry: buy_stop_above_pivot},
+           source_ref: [M4-L1-S4-V, M2-L5-S5-V], status: SIGNED-AMENDED, script_check: "verified (base length)"}
+    A-3a: {title: Flat Base, params: {weeks: [5, 10]}, source_ref: M3-L3, status: SCRIPT-SOURCED, note: "Base type named in D-1; weeks from the M3-L3 script, not the signed sheet. Deron to confirm.", script_check: verified}
+    A-4:  {title: Cup and Handle, params: {depth_pct: [20, 35], base_min_weeks: 7, handle: "upper half, drying volume"}, entry: "break above the handle high on volume", checklist: 10-point (M3-L3),
+           source_ref: M3-L3-S3, status: SIGNED-AMENDED, script_check: verified}
+    A-5:  {title: Double Bottom, params: {undercut_pct: [1, 10], depth_pct_max: 40, base_min_weeks: 7, middle_peak: upper half}, entry: "above the middle peak on volume", checklist: 7-point (M3-L3-S5-P),
+           source_ref: M3-L3-S5-P, status: SIGNED, script_check: not_yet}
+    A-6:  {title: Bull Flag, params: {pole_gain_pct_min: 15, pole_weeks: [2, 3], pole_volume_vs_avg: 1.5, flag_weeks: [1, 3], flag_volume: light},
+           entry: "break of the flag's downtrend line", source_ref: M3-L4-S5, status: SIGNED, script_check: not_yet}
+    A-7:  {title: Pullback in Uptrend, params: {support: [EMA8, EMA20]}, entry: "through the prior day's high with volume returning",
+           source_ref: [M3-L4-S1, M3-L4-S3, M3-L4-S4, M4-L1-S5], status: SIGNED, script_check: not_yet}
+    A-8:  {title: First Pullback, params: {pullback_pct: [3, 7], volume: "lighter than breakout day", holds: [EMA8, EMA20]},
+           source_ref: [M3-L4-S2, M2-L5-S5-V], status: SIGNED, script_check: not_yet}
+    A-9:  {title: Shakeout, params: {condition: "undercut support or swing low, then close back above it and the 8 EMA"},
+           source_ref: [M3-L4-S6, M4-L1-S7-V], status: SIGNED, script_check: not_yet}
+    A-10: {title: "Gap entry (entry rule, not a setup)", params: {tradeable_gap_pct_max: 2, wait_for_pullback_gap_pct_min: 5, judge_interest_by: pre-market volume},
+           source_ref: [M4-L1-S6-V, M4-L1-S8-V], status: SIGNED, note: "D-1: Gap Entry is an entry rule.", script_check: not_yet}
+    A-11: {title: Relative strength improving, params: {rs_line: rising}, source_ref: M3-L2-S1-V, status: SIGNED, script_check: not_yet}
+    A-12: {title: Stage validity, params: {breakouts: [late_stage_1, stage_2], pullbacks_and_flags: [stage_2], no_long_setups: [stage_3, stage_4]},
+           stage_definition: "10-week and 40-week MAs (M2-L5); daily MA stack accepted as an engine proxy (D-5)",
+           verdict: STAGE_INVALID, severity: block, applies_to: long,
+           source_ref: M2-L5, status: SIGNED-AMENDED, script_check: "not_yet (Module 2 scripts not in the share)"}
+    A-13: {title: Setup grade A/B/C, params: {min_reward_risk: 2.0, measured_to: low end of target range},
+           note: "Rubric source still open. A-grade is self-declared until sourced. Not blocking.",
+           source_ref: M4-L4-S4-V, status: PENDING-RULING}
+  no_ema20_entry_rule:                     # ruled 29 Sep, item 14
+    note: "Buying at or below a stock's 20-day EMA is taught (EMA touch, undercut). The only 20 EMA condition is on the index."
+    source_ref: [M3-L4, M4-L1]
+    status: RULED-29SEP
+
+# ---------------------------------------------------------------------
+# Stops and size (Core)
+# ---------------------------------------------------------------------
+sizing:
+  rules:
+    A-14: {title: "Chart sets the stop, stop sets the size", params: {bases: [swing_low, EMA20, horizontal_support]},
+           stop_pending: {verdict: STOP_PENDING, severity: block, note: "Rick's 'stop to follow'; sizes nothing. Citation as in contract vector 012."},
+           note: "Buffer detail is Practice (B-3).", source_ref: [M4-L3-S3, M4-L3-S3-V], status: SIGNED, script_check: not_yet}
+    A-15: {title: Risk per trade, params: {buy: 1.0, wait: "no new long entries"}, note: "Per D-3.",
+           source_ref: D-3, status: SIGNED-AMENDED}
+    D-3:  {title: A-grade opt-in, params: {risk_pct_a_grade_max: 1.5},
+           applies_when: ["self_declared_a_grade or grade A", "published call is buy", "profile.risk_pct_a_grade set"],
+           note: "Personal setting, not Core. Self-declared until the A-13 rubric is sourced.", status: SIGNED-AMENDED}
+    size_factor: {title: Rick's size call, params: {values: [1.0, 0.5, 0.25], applied: "multiplies the risk % before the formula"},
+           missing: "the platform shows 'Size call not set' and does not size it as full (v0.9.4)", status: RULED-29SEP}
+    A-16: {title: Formula, formula: "shares = floor(account x risk% / |entry - stop|)", source_ref: M5-L1-S2-V, status: SIGNED, script_check: verified}
+    A-17: {title: Allocation cap by stop distance, bands: [{stop_pct_below: 5, max_alloc_pct: 30}, {stop_pct_from: 5, below: 8, max_alloc_pct: 15}, {stop_pct_from: 8, max_alloc_pct: 8}],
+           note: "Script: 2-4% -> 30, 5-7% -> 15, 8%+ -> 8. Gaps closed by D-4.", source_ref: M4-L3-S3, status: SIGNED, script_check: verified}
+    A-18: {title: 30% Shield, params: {max_alloc_pct: 30}, source_ref: M5-L1-S3, status: SIGNED, script_check: verified}
+    A-19: {title: Smallest wins, rule: "min(A-16, A-17, A-18); ties list every binding rule; then confirm heat", source_ref: [M5-L1-S3, M4-L3-S3-P], status: SIGNED}
+    A-20: {title: Adding to positions, params: {starter_fraction: 0.25, starter_risk_pct: 0.25, full_risk_pct: 1.0, add_only_in: buy, never: [average_down, exceed_caps]},
+           enforcement: "guidance until the platform records adds", note: "Approved; the 1.5% opt-in is a personal setting, not Core.", source_ref: M5-L1-S4-V, status: SIGNED, script_check: not_yet}
+    A-20b: {title: High-volatility names, params: {suggested_alloc_cap_pct: [5, 8]}, enforcement: guidance, source_ref: M5-L1-S3-V, status: GUIDANCE}
+
+# ---------------------------------------------------------------------
+# Portfolio limits (Core)
+# ---------------------------------------------------------------------
+portfolio:
+  rules:
+    C-1/A-21: {title: Open risk (portfolio heat) limit,
+           params: {default_pct: 5, personal_max_pct: 7, above_5_only_in: buy, wait_limit: "min(personal, 5)", warning_above_5: once},
+           measure: "sum over open positions of shares x |entry - stop|, / account; breakeven positions count 0; shorts count",
+           phase1_stand_in: "declared_heat_pct when open_positions is empty",
+           at_limit: "fits (the limit is a maximum)",
+           breach: {verdict: HEAT_LIMIT, severity: block, show: shares_within_limit},
+           breach_action_guidance: "reduce the weakest by relative strength first",
+           source_ref: [M5-L2-S3-V, M4-L4-S3], status: SIGNED-AMENDED, script_check: "verified (5%)"}
+    A-21b: {title: Heat checks and bands, params: {checks: ["pre-open, gap-adjusted", "before each entry", "close", "weekly"], optimal_pct: [3, 4], low_flag_pct: 2},
+           note: "Bands fixed at any personal limit (D-7).", enforcement: guidance, source_ref: M5-L2-S3-V, status: GUIDANCE}
+    A-22: {title: Drawdown nudge, params: {monthly_drawdown_pct: 5, consecutive_losses: 3}, enforcement: "coaching only, never scored (D-11)", status: GUIDANCE}
+    A-23: {title: Sector limit, params: {max_pct_of_account: 50},
+           measure: "sum of shares x entry for open positions in the candidate's sector plus this trade at computed size, / account size",
+           not_checked_warns_when: ["candidate sector unknown", "no position list (declared stand-ins only)", "an open position has no sector"],
+           breach: {verdict: SECTOR_LIMIT, severity: block},
+           note: "Measurement basis (entry prices, account size) is an engine convention; Deron to confirm. Sector risk check (I-124) not added without a ruling.",
+           source_ref: M5-L2-S4-P, status: SIGNED, script_check: "verified (50%)"}
+    A-23b: {title: Number of positions, params: {default: 4, warn_above: 8, hard_cap: 10},
+           rule: "block when open count + 1 exceeds the trader's max_positions; warn when it exceeds 8",
+           phase1_stand_in: declared_open_count, breach: {verdict: POSITION_LIMIT, severity: block},
+           capacity_test: "can you keep 8-day EMA discipline on every position",
+           source_ref: M4-L3-S2-V, status: SIGNED-AMENDED, script_check: not_yet}
+
+# ---------------------------------------------------------------------
+# Exits (Core). Planned before entry.
+# ---------------------------------------------------------------------
+exits:
+  rules:
+    A-24: {title: Five exit steps before a plan is armed, steps: [technical_stop, consistent_risk, pattern_target, trailing_method, timing_posture],
+           enforcement: "PENDING-RULING: the v2.1 candidate carries no trailing method or hold, so /check can't test all five. Proposed: enforce when a plan is armed or logged; warn in /check.",
+           verdict: EXIT_PLAN_INCOMPLETE, source_ref: [M4-L2-S2-V, M4-L2-S3-P], status: SIGNED, note: "Approved as blocking; enforcement waits on candidate inputs (review item 10)."}
+    A-24b: {title: Pattern targets, params: {breakout_blue_sky_pct: [15, 30], pullback_into_resistance_pct: [8, 20]}, source_ref: M4-L2-S3-P, status: SIGNED, script_check: "verified (15-30)"}
+    A-24c: {title: Trailing stop by trend, params: {strong: EMA8, moderate: EMA20, long_term: MA50, crypto: [EMA20, EMA50], signal: "consecutive closes below, not intraday touches"},
+           source_ref: [M4-L2-S3-P, M4-L3-S4-V], status: SIGNED, script_check: not_yet}
+    A-25: {title: Raising the stop, params: {at_50pct_to_target: breakeven, at_75pct: "EMA20 minus $1", beyond_target: EMA8}, enforcement: "guidance (D-8)", status: GUIDANCE}
+    A-26: {title: Scale-out templates (Core), templates: {
+             Income: [{pct: 33, at_gain_pct: 20}, {pct: 33, at_gain_pct: [35, 50]}, {pct: 34, trail: EMA8}],
+             Technical: [{pct: 40, at: first_target}, {pct: 35, at: second_target}, {pct: 25, trail: trader's method}],
+             Conservative: [{pct: 50, at_gain_pct: 15}, {pct: 30, at_gain_pct: 25}, {pct: 20, trail: trader's method}]},
+           default: "student chooses; scored on following their own choice (D-6)", preselected_practice_default: P-SCALE-RICK,
+           source_ref: M4-L3-S5-V, status: SIGNED-AMENDED, script_check: not_yet}
+    A-26b: {title: Volume modifiers on exits, params: {declining: "speed up", strong: "hold plan", climax_or_distribution: "exit early"}, source_ref: [M4-L3-S5-V, M4-L2-S6], status: SIGNED}
+    A-27: {title: Earnings inside the planned hold, rule: "block, or the plan includes an earnings exit",
+           verdict: EARNINGS_IN_HOLD, severity: block,
+           enforcement: "PENDING-RULING: needs the planned hold (not in the v2.1 candidate) or an agreed default window. Message names the earnings date (v2.2 item 5).",
+           data: "next_earnings_date from the market-facts store", source_ref: M4-L2-S4, status: SIGNED, note: "Approved as blocking; needs the hold or a default window (review item 10).", script_check: "not_yet (segment M4-L2-S4 is Gap Protection; earnings wording not traced)"}
+
+# ---------------------------------------------------------------------
+# Consistency warnings (ruled 29 Sep, item 14). Warn only, never scored.
+# ---------------------------------------------------------------------
+consistency:
+  W-EMA20-TRAIL: {title: "Buying below the 20 EMA while trailing on it", cites: A-24c, severity: warn,
+                  needs: "candidate trailing method (v2.2 gap, I-179) and the stock's 20 EMA from the facts store"}
+  W-STOP-SIDE:   {title: Stop on the wrong side of entry, cites: A-14, severity: warn,
+                  note: "Warn, per the contract. A numeric stop on the wrong side never reaches the engine: the platform's validation rejects it. The warning covers stop_basis ema20 with the entry below the stock's 20 EMA."}
+
+# ---------------------------------------------------------------------
+# Excluded (signed)
+# ---------------------------------------------------------------------
+course_material:
+  D-10: "The RYG cheat sheet and the Follow-through day PDF are course material (Core). The RYG sheet is to be rewritten as binary Buy/Wait-Sell; both added to M4-L4 resources (course-fix list). Lesson M5-L2-S1 needs the same rewrite (change list 7.1)."
+
+excluded:
+  C-4: 'Earn the right to trade bigger is a teaching concept, not a rule.'
+  C-3: 'High Tight Flag is not a Core setup (see practice P-HTF).'
+  module_6_psychology: "journal prompts and coaching, not trade rules"
+  personal_overlays: "never in this file, never in /scan (e.g. Ev's 90 HMA, 3 EMA, Ev-Exit-1)"
+
+# =====================================================================
+# MTG-Practice (Section B, Rick). Guidance only, never scored.
+# =====================================================================
+practice:
+  B-1:     {title: ADR band, params: {adr_period_days: 20, adr_pct: [3, 8]}, source_ref: PRACTICE-RICK, status: SIGNED}
+  B-2:     {title: Stop placement, params: {bases: ["swing low if close by", "EMA8 or EMA20 when entering on the average", "low of the reversal day when that is the signal"]},
+            source_ref: PRACTICE-RICK, status: SIGNED}
+  B-3:     {title: Stop buffer and positions, params: {buffer_under_50: "as typed: 'usually just 10 about 21 cents below swing low' — about $0.10-0.21; confirm with Rick", buffer_over_50_or_100: "just below the whole number under the swing low", positions: "4-10 max"},
+            source_ref: PRACTICE-RICK, status: SIGNED}
+  P-GAPDOWN: {title: Gap down through the stop, rule: "wait 30 minutes, then set the stop at the 30-minute low minus $0.20",
+            reason: "to give the stock a chance to reverse higher", departs_from: "M4-L2-S4 Gap Protection (script verified)",
+            needs: "intraday bars (deferred)", source_ref: "PRACTICE-RICK (27 Sep)", status: RULED-29SEP}
+  P-HTF:   {title: High Tight Flag, params: {advance_pct_min: 100, measured_from: last base lows, advance_weeks_max: 8, pause_weeks: [2, 3], pullback_pct_max: [20, 25]},
+            scanner_label: "Rare pattern", label_note: "Signed C-3 said 'rare, high profit potential'; the UX test changed it to 'Rare pattern' (wireframes v1.2).", source_ref: PRACTICE-RICK, status: SIGNED-AMENDED, via: C-3}
+  P-SCALE-RICK: {title: Rick's scale-out, rule: "one scale at +15-30%, trail the rest on the 8 EMA", preselected_default: true, status: SIGNED-AMENDED, via: [A-26, D-6]}
+  P-PARTICIPATION: {title: Participation by state, params: {wait: none, buy_starting: [2, 4], buy_going_well: [4, 8]}, maps_to: A-23b, source_ref: "PRACTICE-RICK (27 Sep)", status: RULED-29SEP}
+  P-SIZING-NOTE: {title: Report sizing is conservative, note: "Model portfolio typically 5-8% of equity per trade at about 1/3 of 1% risk; traders typically 10-20% invested.", source_ref: [Wagner Daily report footer 30 Sep 2026, Rick 27 Sep], status: GUIDANCE}
+  P-INDEX-EMA: {title: Rick's index average, params: {index_ema: 21, stock_ema: 20}, note: "Core timing uses the 20-day EMA (M4-L4). Recorded so the difference is visible (I-174).", status: GUIDANCE}
+  P-UNOFFICIAL: {title: Unofficial setups, rule: "not sent as Trade Check alerts at launch; if ever sent, flagged and excluded from scoring and the streak", status: RULED-29SEP}
+  P-SHORT: {title: Shorts, rule: "full sizing and risk rules; no setup or stage citation; warn on every short", severity: warn, scanner: "long only", status: RULED-29SEP}
