@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform.morpheustrading.com/contracts/check-result.schema.json",
+  "title": "POST /check response (Rulebook service -> platform), contract v2.1",
+  "description": "Deterministic: same input, same output. Rounding: shares floored to whole units; money and percentages rounded to 2 decimals.",
+  "type": "object",
+  "required": [
+    "shares",
+    "dollar_risk",
+    "pct_account",
+    "verdict",
+    "blocks",
+    "size_breakdown",
+    "heat",
+    "regime",
+    "ruleset_id"
+  ],
+  "properties": {
+    "shares": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Final size after every cap. 0 when any severity=block entry is present."
+    },
+    "dollar_risk": {
+      "type": "number",
+      "description": "shares x |entry - stop|. 0 when shares is 0."
+    },
+    "pct_account": {
+      "type": "number",
+      "description": "dollar_risk / account_size x 100"
+    },
+    "verdict": {
+      "enum": [
+        "FITS",
+        "WAIT_MODE",
+        "NO_TIMING_CALL",
+        "STOP_PENDING",
+        "HEAT_LIMIT",
+        "SECTOR_LIMIT",
+        "POSITION_LIMIT",
+        "EARNINGS_IN_HOLD",
+        "EXIT_PLAN_INCOMPLETE",
+        "STAGE_INVALID",
+        "OVERSIZED"
+      ],
+      "description": "FITS = tradeable at `shares`. Otherwise the most severe blocking rule. NO_TIMING_CALL: no current timing call (missing, or older than the previous trading day). STOP_PENDING: Rick's stop not set yet. OVERSIZED: manual entries proposing more shares than allowed."
+    },
+    "blocks": {
+      "type": "array",
+      "description": "Every rule that fired, most severe first. Empty when FITS with no warnings.",
+      "items": {
+        "type": "object",
+        "required": [
+          "rule_id",
+          "source_ref",
+          "tier",
+          "severity",
+          "message"
+        ],
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "description": "Rulebook ID, e.g. A-17, D-3, C-1"
+          },
+          "source_ref": {
+            "type": "string",
+            "description": "Course segment (e.g. M5-L1-S2-V) or PRACTICE-RICK for Practice rules"
+          },
+          "tier": {
+            "enum": [
+              "core",
+              "practice"
+            ]
+          },
+          "severity": {
+            "enum": [
+              "block",
+              "warn"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "One plain sentence for the screen."
+          }
+        }
+      }
+    },
+    "size_breakdown": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "formula_shares",
+        "stop_cap_shares",
+        "shield_shares",
+        "computed_shares",
+        "binding_rules",
+        "stop_distance_pct",
+        "stop_cap_pct",
+        "risk_pct_used"
+      ],
+      "description": "A-19 'smallest wins', shown so the trader can see why. computed_shares is the size before blocks (shown even when shares=0). Null only for STOP_PENDING (no stop, nothing to compute).",
+      "properties": {
+        "formula_shares": {
+          "type": "integer"
+        },
+        "stop_cap_shares": {
+          "type": "integer"
+        },
+        "shield_shares": {
+          "type": "integer"
+        },
+        "computed_shares": {
+          "type": "integer"
+        },
+        "binding_rules": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "A-16",
+              "A-17",
+              "A-18"
+            ]
+          },
+          "minItems": 1,
+          "description": "All rules that produced the smallest value. Ties list every one."
+        },
+        "stop_distance_pct": {
+          "type": "number"
+        },
+        "stop_cap_pct": {
+          "enum": [
+            30,
+            15,
+            8
+          ],
+          "description": "D-4: under 5% -> 30, 5 to under 8 -> 15, 8+ -> 8"
+        },
+        "risk_pct_used": {
+          "type": "number",
+          "description": "Risk actually applied: risk_pct (or the A-grade value) multiplied by candidate.size_factor"
+        }
+      }
+    },
+    "heat": {
+      "type": "object",
+      "required": [
+        "current_pct",
+        "after_pct",
+        "limit_pct"
+      ],
+      "properties": {
+        "current_pct": {
+          "type": "number"
+        },
+        "after_pct": {
+          "type": "number",
+          "description": "Heat if this trade is taken at computed_shares"
+        },
+        "limit_pct": {
+          "type": "number",
+          "description": "Effective limit applied: personal limit in Buy Mode, min(personal, 5) in Wait/Sell"
+        },
+        "shares_within_limit": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Present on HEAT_LIMIT: the most shares that fit in the remaining heat, min(computed_shares, floor((limit - current)% x account / risk per share)). The member decides whether to take the smaller size or close something."
+        }
+      }
+    },
+    "regime": {
+      "type": "object",
+      "required": [
+        "state",
+        "severity"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "buy",
+            "wait",
+            null
+          ]
+        },
+        "severity": {
+          "enum": [
+            "light",
+            "severe",
+            null
+          ],
+          "description": "Engine-computed within Wait/Sell (M4-L4-S2). Null in Buy Mode or when unknown."
+        }
+      }
+    },
+    "ruleset_id": {
+      "type": "string",
+      "pattern": "^mtg_core@\\d+\\.\\d+$",
+      "description": "e.g. mtg_core@1.2"
+    },
+    "engine_version": {
+      "type": "string"
+    },
+    "engine_data_as_of": {
+      "type": "string",
+      "description": "When the engine's market-facts store (stage, moving averages, earnings dates) was last refreshed, so the screen can show data age."
+    }
+  },
+  "additionalProperties": true
+}

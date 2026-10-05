@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform.morpheustrading.com/contracts/candidate.schema.json",
+  "title": "Trade candidate (contract v2.1)",
+  "description": "One thing a trader might buy or short. Same shape whether it came from a Wagner Daily alert, the scanner, or manual entry.",
+  "type": "object",
+  "required": [
+    "symbol",
+    "direction",
+    "entry",
+    "stop",
+    "source",
+    "timestamp"
+  ],
+  "properties": {
+    "symbol": {
+      "type": "string",
+      "pattern": "^[A-Z0-9.\\-]{1,12}$"
+    },
+    "direction": {
+      "enum": [
+        "long",
+        "short"
+      ]
+    },
+    "asset_class": {
+      "enum": [
+        "equity",
+        "etf",
+        "crypto"
+      ],
+      "default": "equity"
+    },
+    "entry": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "Trigger price. Long: stop < entry. Short: stop > entry."
+    },
+    "stop": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "exclusiveMinimum": 0,
+      "description": "Null only when stop_pending is true (Rick opened the trade with 'stop to follow by alert')."
+    },
+    "targets": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "default": []
+    },
+    "sector": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "GICS-style sector name. Needed for the 50% sector cap (A-23). Null if unknown; engine then skips A-23 and adds a warn block."
+    },
+    "setup_type": {
+      "enum": [
+        "base_breakout",
+        "flat_base",
+        "cup_and_handle",
+        "double_bottom",
+        "bull_flag",
+        "pullback_in_uptrend",
+        "first_pullback",
+        "shakeout",
+        "high_tight_flag",
+        null
+      ],
+      "default": null,
+      "description": "Core setups per D-1; flat_base, cup_and_handle and double_bottom are base types. high_tight_flag is Practice only (C-3)."
+    },
+    "setup_status": {
+      "enum": [
+        "FORMING",
+        "CONFIRMED",
+        null
+      ],
+      "default": null
+    },
+    "grade": {
+      "enum": [
+        "A",
+        "B",
+        "C",
+        null
+      ],
+      "default": null,
+      "description": "Engine grade when the A-13 rubric exists. Until then null."
+    },
+    "self_declared_a_grade": {
+      "type": "boolean",
+      "default": false,
+      "description": "Trader says this is an A-grade setup. Unlocks profile.risk_pct_a_grade in Buy Mode only (D-3). Logged."
+    },
+    "entry_method": {
+      "enum": [
+        "buy_stop",
+        "gap",
+        "manual",
+        null
+      ],
+      "default": null,
+      "description": "gap = gap entry rule A-10 applies."
+    },
+    "stop_basis": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Why the stop is where it is (swing_low, ema8, ema20, reversal_day_low). Judgment tier, never scored."
+    },
+    "source": {
+      "enum": [
+        "WD_ALERT",
+        "SCANNER",
+        "MANUAL"
+      ]
+    },
+    "next_earnings_date": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "size_factor": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "default": 1,
+      "description": "Rick's size call on the alert: 1 = full size, 0.5 = half, 0.25 = quarter. The engine multiplies the trader's risk_pct (or risk_pct_a_grade) by this BEFORE the formula. Caps still apply. Missing = 1."
+    },
+    "stop_pending": {
+      "type": "boolean",
+      "default": false,
+      "description": "Rick has not set the stop yet. The engine returns STOP_PENDING and sizes nothing. Only the platform sets this, for Wagner Daily alerts."
+    }
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "stop_pending": {
+            "const": true
+          }
+        },
+        "required": [
+          "stop_pending"
+        ]
+      },
+      "then": {
+        "properties": {
+          "stop": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "stop": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  ]
+}

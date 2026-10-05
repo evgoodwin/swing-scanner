@@ -1,0 +1,61 @@
+{
+  "name": "017_stop_band_boundary_5pct",
+  "note": "Stop exactly 5.00% from entry is in the 15% band (D-4: 5% to under 8%). Cap 75 beats formula 100.",
+  "ruleset": "mtg_core@1.2",
+  "request": {
+    "candidate": {
+      "symbol": "ABC",
+      "direction": "long",
+      "entry": 100.0,
+      "stop": 95.0,
+      "source": "WD_ALERT",
+      "asset_class": "equity",
+      "sector": "Technology",
+      "timestamp": "2026-09-28T13:30:00Z",
+      "targets": [
+        115
+      ]
+    },
+    "profile": {
+      "account_size": 50000,
+      "risk_pct": 1.0,
+      "risk_pct_a_grade": null,
+      "heat_limit_pct": 5,
+      "max_positions": 4,
+      "open_positions": []
+    },
+    "regime": {
+      "state": "buy",
+      "as_of": "2026-09-25"
+    }
+  },
+  "expected": {
+    "shares": 75,
+    "dollar_risk": 375,
+    "pct_account": 0.75,
+    "verdict": "FITS",
+    "blocks": [],
+    "size_breakdown": {
+      "formula_shares": 100,
+      "stop_cap_shares": 75,
+      "shield_shares": 150,
+      "computed_shares": 75,
+      "binding_rules": [
+        "A-17"
+      ],
+      "stop_distance_pct": 5,
+      "stop_cap_pct": 15,
+      "risk_pct_used": 1
+    },
+    "heat": {
+      "current_pct": 0,
+      "after_pct": 0.75,
+      "limit_pct": 5
+    },
+    "regime": {
+      "state": "buy",
+      "severity": null
+    },
+    "ruleset_id": "mtg_core@1.2"
+  }
+}

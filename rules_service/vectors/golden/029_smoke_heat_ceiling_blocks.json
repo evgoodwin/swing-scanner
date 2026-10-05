@@ -1,0 +1,106 @@
+{
+  "name": "029_smoke_heat_ceiling_blocks",
+  "note": "Smoke test 15: four open positions at $1,200 risk each = 4.8%. 150 shares add 0.75%, so 5.55% exceeds 5%: HEAT_LIMIT. 40 shares fit. Personal max_positions set to 8 so the position limit doesn't fire first.",
+  "ruleset": "mtg_core@1.2",
+  "smoke_tests": [
+    15
+  ],
+  "request": {
+    "candidate": {
+      "symbol": "TEST",
+      "direction": "long",
+      "entry": 100.0,
+      "stop": 95.0,
+      "source": "WD_ALERT",
+      "asset_class": "equity",
+      "sector": "Technology",
+      "timestamp": "2026-09-28T13:30:00Z",
+      "targets": [
+        115
+      ]
+    },
+    "profile": {
+      "account_size": 100000,
+      "risk_pct": 1.0,
+      "risk_pct_a_grade": null,
+      "heat_limit_pct": 5,
+      "max_positions": 8,
+      "open_positions": [
+        {
+          "symbol": "P0",
+          "direction": "long",
+          "shares": 100,
+          "entry": 100.0,
+          "stop": 88.0,
+          "sector": "Energy"
+        },
+        {
+          "symbol": "P1",
+          "direction": "long",
+          "shares": 100,
+          "entry": 100.0,
+          "stop": 88.0,
+          "sector": "Financials"
+        },
+        {
+          "symbol": "P2",
+          "direction": "long",
+          "shares": 100,
+          "entry": 100.0,
+          "stop": 88.0,
+          "sector": "Industrials"
+        },
+        {
+          "symbol": "P3",
+          "direction": "long",
+          "shares": 100,
+          "entry": 100.0,
+          "stop": 88.0,
+          "sector": "Utilities"
+        }
+      ]
+    },
+    "regime": {
+      "state": "buy",
+      "as_of": "2026-09-25"
+    }
+  },
+  "expected": {
+    "shares": 0,
+    "dollar_risk": 0,
+    "pct_account": 0,
+    "verdict": "HEAT_LIMIT",
+    "blocks": [
+      {
+        "rule_id": "A-21",
+        "source_ref": "M5-L2-S3-V",
+        "tier": "core",
+        "severity": "block",
+        "message": "This trade would take your open risk to 5.55%, above your 5% limit."
+      }
+    ],
+    "size_breakdown": {
+      "formula_shares": 200,
+      "stop_cap_shares": 150,
+      "shield_shares": 300,
+      "computed_shares": 150,
+      "binding_rules": [
+        "A-17"
+      ],
+      "stop_distance_pct": 5,
+      "stop_cap_pct": 15,
+      "risk_pct_used": 1
+    },
+    "heat": {
+      "current_pct": 4.8,
+      "after_pct": 5.55,
+      "limit_pct": 5,
+      "shares_within_limit": 40
+    },
+    "regime": {
+      "state": "buy",
+      "severity": null
+    },
+    "ruleset_id": "mtg_core@1.2"
+  }
+}

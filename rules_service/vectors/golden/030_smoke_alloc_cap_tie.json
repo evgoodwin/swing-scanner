@@ -1,0 +1,65 @@
+{
+  "name": "030_smoke_alloc_cap_tie",
+  "note": "Smoke test 16: stop 0.5% from entry. Formula 2,000 shares ($200k) is capped at 300 by both the 30% band (A-17) and the 30% Shield (A-18); both are listed as binding.",
+  "ruleset": "mtg_core@1.2",
+  "smoke_tests": [
+    16
+  ],
+  "request": {
+    "candidate": {
+      "symbol": "TEST",
+      "direction": "long",
+      "entry": 100.0,
+      "stop": 99.5,
+      "source": "WD_ALERT",
+      "asset_class": "equity",
+      "sector": "Technology",
+      "timestamp": "2026-09-28T13:30:00Z",
+      "targets": [
+        101.5
+      ]
+    },
+    "profile": {
+      "account_size": 100000,
+      "risk_pct": 1.0,
+      "risk_pct_a_grade": null,
+      "heat_limit_pct": 5,
+      "max_positions": 4,
+      "open_positions": []
+    },
+    "regime": {
+      "state": "buy",
+      "as_of": "2026-09-25"
+    }
+  },
+  "expected": {
+    "shares": 300,
+    "dollar_risk": 150,
+    "pct_account": 0.15,
+    "verdict": "FITS",
+    "blocks": [],
+    "size_breakdown": {
+      "formula_shares": 2000,
+      "stop_cap_shares": 300,
+      "shield_shares": 300,
+      "computed_shares": 300,
+      "binding_rules": [
+        "A-17",
+        "A-18"
+      ],
+      "stop_distance_pct": 0.5,
+      "stop_cap_pct": 30,
+      "risk_pct_used": 1
+    },
+    "heat": {
+      "current_pct": 0,
+      "after_pct": 0.15,
+      "limit_pct": 5
+    },
+    "regime": {
+      "state": "buy",
+      "severity": null
+    },
+    "ruleset_id": "mtg_core@1.2"
+  }
+}

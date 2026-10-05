@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform.morpheustrading.com/contracts/scan-result.schema.json",
+  "title": "GET /scan response (Rulebook service -> platform), contract v2.1",
+  "description": "Latest scanner run. The platform caches it and shows it to PRO+ members; each candidate opens Trade Check unchanged.",
+  "type": "object",
+  "required": [
+    "as_of",
+    "ruleset_id",
+    "candidates"
+  ],
+  "properties": {
+    "as_of": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the scan ran (after the US close)"
+    },
+    "ruleset_id": {
+      "type": "string",
+      "pattern": "^mtg_core@\\d+\\.\\d+$"
+    },
+    "regime": {
+      "type": "object",
+      "required": [
+        "state",
+        "severity"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "buy",
+            "wait",
+            null
+          ]
+        },
+        "severity": {
+          "enum": [
+            "light",
+            "severe",
+            null
+          ]
+        }
+      },
+      "description": "Optional from the engine. The platform attaches Rick's published call from its own record (Ev's item 4, option c)."
+    },
+    "universe_size": {
+      "type": "integer",
+      "description": "How many symbols were scanned"
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {
+            "$ref": "candidate.schema.json"
+          }
+        ],
+        "type": "object",
+        "required": [
+          "setup_type",
+          "setup_status",
+          "rank"
+        ],
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "rs_rising": {
+            "type": "boolean",
+            "description": "A-11"
+          },
+          "base_weeks": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Length of the base in weeks (A-3: 5+ stocks, 4+ crypto). Null for non-base setups."
+          },
+          "practice_flags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "e.g. HIGH_TIGHT_FLAG (C-3): shown as rare, high profit potential. Never scored."
+          }
+        }
+      }
+    }
+  }
+}

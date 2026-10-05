@@ -1,0 +1,134 @@
+{
+  "name": "021_ninth_position_warns",
+  "note": "Personal limit 10 (A-23b cap). Eight open; the ninth fits with a warning above 8 (per Rick, signed).",
+  "ruleset": "mtg_core@1.2",
+  "request": {
+    "candidate": {
+      "symbol": "AAPL",
+      "direction": "long",
+      "entry": 182.5,
+      "stop": 176.0,
+      "source": "WD_ALERT",
+      "asset_class": "equity",
+      "sector": "Technology",
+      "timestamp": "2026-09-28T13:30:00Z",
+      "targets": [
+        195
+      ]
+    },
+    "profile": {
+      "account_size": 50000,
+      "risk_pct": 1.0,
+      "risk_pct_a_grade": null,
+      "heat_limit_pct": 5,
+      "max_positions": 10,
+      "open_positions": [
+        {
+          "symbol": "JPM",
+          "direction": "long",
+          "shares": 10,
+          "entry": 250.0,
+          "stop": 232.0,
+          "sector": "Financials"
+        },
+        {
+          "symbol": "LLY",
+          "direction": "long",
+          "shares": 3,
+          "entry": 800.0,
+          "stop": 740.0,
+          "sector": "Health Care"
+        },
+        {
+          "symbol": "CAT",
+          "direction": "long",
+          "shares": 8,
+          "entry": 350.0,
+          "stop": 327.5,
+          "sector": "Industrials"
+        },
+        {
+          "symbol": "COST",
+          "direction": "long",
+          "shares": 3,
+          "entry": 900.0,
+          "stop": 840.0,
+          "sector": "Consumer Staples"
+        },
+        {
+          "symbol": "NEE",
+          "direction": "long",
+          "shares": 36,
+          "entry": 75.0,
+          "stop": 70.0,
+          "sector": "Utilities"
+        },
+        {
+          "symbol": "AMZN",
+          "direction": "long",
+          "shares": 15,
+          "entry": 190.0,
+          "stop": 178.0,
+          "sector": "Consumer Discretionary"
+        },
+        {
+          "symbol": "PLD",
+          "direction": "long",
+          "shares": 20,
+          "entry": 120.0,
+          "stop": 111.0,
+          "sector": "Real Estate"
+        },
+        {
+          "symbol": "LIN",
+          "direction": "long",
+          "shares": 6,
+          "entry": 450.0,
+          "stop": 420.0,
+          "sector": "Materials"
+        }
+      ]
+    },
+    "regime": {
+      "state": "buy",
+      "as_of": "2026-09-25"
+    }
+  },
+  "expected": {
+    "shares": 76,
+    "dollar_risk": 494,
+    "pct_account": 0.99,
+    "verdict": "FITS",
+    "blocks": [
+      {
+        "rule_id": "A-23b",
+        "source_ref": "M4-L3-S2-V",
+        "tier": "core",
+        "severity": "warn",
+        "message": "This would be position 9. Above 8 positions, check you can keep 8-day EMA discipline on every one."
+      }
+    ],
+    "size_breakdown": {
+      "formula_shares": 76,
+      "stop_cap_shares": 82,
+      "shield_shares": 82,
+      "computed_shares": 76,
+      "binding_rules": [
+        "A-16"
+      ],
+      "stop_distance_pct": 3.56,
+      "stop_cap_pct": 30,
+      "risk_pct_used": 1
+    },
+    "heat": {
+      "current_pct": 2.88,
+      "after_pct": 3.87,
+      "limit_pct": 5
+    },
+    "regime": {
+      "state": "buy",
+      "severity": null
+    },
+    "ruleset_id": "mtg_core@1.2"
+  }
+}

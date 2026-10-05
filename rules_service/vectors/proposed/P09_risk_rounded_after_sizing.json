@@ -1,0 +1,66 @@
+{
+  "name": "P09_risk_rounded_after_sizing",
+  "note": "A-grade 1.5% x quarter size 0.25 = 0.375% risk. Size from the unrounded 0.375% ($187.50 / $6.50 = 28.8 -> 28), report risk_pct_used 0.38. Rounding first (0.38% -> 29 shares) oversizes. The platform's golden.test.js rounds first and needs the same fix.",
+  "ruleset": "mtg_core@1.2",
+  "request": {
+    "candidate": {
+      "symbol": "AAPL",
+      "direction": "long",
+      "entry": 182.5,
+      "stop": 176.0,
+      "source": "WD_ALERT",
+      "asset_class": "equity",
+      "sector": "Technology",
+      "timestamp": "2026-09-28T13:30:00Z",
+      "targets": [
+        195
+      ],
+      "self_declared_a_grade": true,
+      "size_factor": 0.25
+    },
+    "profile": {
+      "account_size": 50000,
+      "risk_pct": 1.0,
+      "risk_pct_a_grade": 1.5,
+      "heat_limit_pct": 5,
+      "max_positions": 4,
+      "open_positions": []
+    },
+    "regime": {
+      "state": "buy",
+      "as_of": "2026-09-25"
+    }
+  },
+  "expected": {
+    "shares": 28,
+    "dollar_risk": 182,
+    "pct_account": 0.36,
+    "verdict": "FITS",
+    "blocks": [],
+    "size_breakdown": {
+      "formula_shares": 28,
+      "stop_cap_shares": 82,
+      "shield_shares": 82,
+      "computed_shares": 28,
+      "binding_rules": [
+        "A-16"
+      ],
+      "stop_distance_pct": 3.56,
+      "stop_cap_pct": 30,
+      "risk_pct_used": 0.38
+    },
+    "heat": {
+      "current_pct": 0,
+      "after_pct": 0.36,
+      "limit_pct": 5
+    },
+    "regime": {
+      "state": "buy",
+      "severity": null
+    },
+    "ruleset_id": "mtg_core@1.2"
+  },
+  "requires": [
+    "platform_test_fix"
+  ]
+}

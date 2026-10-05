@@ -1,0 +1,100 @@
+{
+  "name": "P07_short_in_wait_heat_limit_5",
+  "note": "Short on a Wait day with personal limit 7%: limit drops to 5% outside Buy Mode (C-1). 4.5% open + 1.0% = 5.5% blocks; 50 shares fit. Needs the facts fixture for severity.",
+  "ruleset": "mtg_core@1.2",
+  "request": {
+    "candidate": {
+      "symbol": "NFLX",
+      "direction": "short",
+      "entry": 120.0,
+      "stop": 125.0,
+      "source": "WD_ALERT",
+      "asset_class": "equity",
+      "sector": "Technology",
+      "timestamp": "2026-09-28T13:30:00Z",
+      "targets": [
+        105
+      ]
+    },
+    "profile": {
+      "account_size": 50000,
+      "risk_pct": 1.0,
+      "risk_pct_a_grade": null,
+      "heat_limit_pct": 7,
+      "max_positions": 4,
+      "open_positions": [
+        {
+          "symbol": "XOM",
+          "direction": "long",
+          "shares": 450,
+          "entry": 40.0,
+          "stop": 35.0,
+          "sector": "Energy"
+        }
+      ]
+    },
+    "regime": {
+      "state": "wait",
+      "as_of": "2026-09-25"
+    }
+  },
+  "expected": {
+    "shares": 0,
+    "dollar_risk": 0,
+    "pct_account": 0,
+    "verdict": "HEAT_LIMIT",
+    "blocks": [
+      {
+        "rule_id": "A-21",
+        "source_ref": "M5-L2-S3-V",
+        "tier": "core",
+        "severity": "block",
+        "message": "This trade would take your open risk to 5.5%, above your 5% limit."
+      },
+      {
+        "rule_id": "P-SHORT",
+        "source_ref": "PRACTICE",
+        "tier": "practice",
+        "severity": "warn",
+        "message": "Shorts aren't covered by the TradeQuest setup rules. This checks your size and risk limits only."
+      }
+    ],
+    "size_breakdown": {
+      "formula_shares": 100,
+      "stop_cap_shares": 125,
+      "shield_shares": 125,
+      "computed_shares": 100,
+      "binding_rules": [
+        "A-16"
+      ],
+      "stop_distance_pct": 4.17,
+      "stop_cap_pct": 30,
+      "risk_pct_used": 1
+    },
+    "heat": {
+      "current_pct": 4.5,
+      "after_pct": 5.5,
+      "limit_pct": 5,
+      "shares_within_limit": 50
+    },
+    "regime": {
+      "state": "wait",
+      "severity": "light"
+    },
+    "ruleset_id": "mtg_core@1.2"
+  },
+  "requires": [
+    "facts_fixture"
+  ],
+  "facts": {
+    "as_of": "2026-09-25",
+    "dominant_index": "^IXIC",
+    "index": {
+      "close": 17800,
+      "ema20": 18050,
+      "sma50": 17600,
+      "dist_days_5wk": 3
+    },
+    "symbols": {}
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "name": "002_wide_stop_cap_binds",
+  "note": "9% stop puts it in the 8% cap band (D-4). Cap (40) beats formula (55).",
+  "ruleset": "mtg_core@1.2",
+  "request": {
+    "candidate": {
+      "symbol": "XYZ",
+      "direction": "long",
+      "entry": 100.0,
+      "stop": 91.0,
+      "source": "WD_ALERT",
+      "asset_class": "equity",
+      "sector": "Technology",
+      "timestamp": "2026-09-28T13:30:00Z"
+    },
+    "profile": {
+      "account_size": 50000,
+      "risk_pct": 1.0,
+      "risk_pct_a_grade": null,
+      "heat_limit_pct": 5,
+      "max_positions": 4,
+      "open_positions": []
+    },
+    "regime": {
+      "state": "buy",
+      "as_of": "2026-09-25"
+    }
+  },
+  "expected": {
+    "shares": 40,
+    "dollar_risk": 360,
+    "pct_account": 0.72,
+    "verdict": "FITS",
+    "blocks": [],
+    "size_breakdown": {
+      "formula_shares": 55,
+      "stop_cap_shares": 40,
+      "shield_shares": 150,
+      "computed_shares": 40,
+      "binding_rules": [
+        "A-17"
+      ],
+      "stop_distance_pct": 9,
+      "stop_cap_pct": 8,
+      "risk_pct_used": 1
+    },
+    "heat": {
+      "current_pct": 0,
+      "after_pct": 0.72,
+      "limit_pct": 5
+    },
+    "regime": {
+      "state": "buy",
+      "severity": null
+    },
+    "ruleset_id": "mtg_core@1.2"
+  },
+  "as_of_now": "2026-09-28T13:30:00Z",
+  "v2_2_changes": [
+    "as_of_now set to the candidate timestamp so the staleness rule is repeatable (v2.2 item 1)"
+  ]
+}

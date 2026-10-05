@@ -1,0 +1,65 @@
+{
+  "name": "P03_before_8am_previous_day_current",
+  "note": "Tuesday 29 Sep 7:00 AM ET, before the day's call: Monday's call is current. Needs as_of_now.",
+  "ruleset": "mtg_core@1.2",
+  "request": {
+    "candidate": {
+      "symbol": "AAPL",
+      "direction": "long",
+      "entry": 182.5,
+      "stop": 176.0,
+      "source": "WD_ALERT",
+      "asset_class": "equity",
+      "sector": "Technology",
+      "timestamp": "2026-09-29T11:00:00Z",
+      "targets": [
+        195
+      ]
+    },
+    "profile": {
+      "account_size": 50000,
+      "risk_pct": 1.0,
+      "risk_pct_a_grade": null,
+      "heat_limit_pct": 5,
+      "max_positions": 4,
+      "open_positions": []
+    },
+    "regime": {
+      "state": "buy",
+      "as_of": "2026-09-28"
+    }
+  },
+  "expected": {
+    "shares": 76,
+    "dollar_risk": 494,
+    "pct_account": 0.99,
+    "verdict": "FITS",
+    "blocks": [],
+    "size_breakdown": {
+      "formula_shares": 76,
+      "stop_cap_shares": 82,
+      "shield_shares": 82,
+      "computed_shares": 76,
+      "binding_rules": [
+        "A-16"
+      ],
+      "stop_distance_pct": 3.56,
+      "stop_cap_pct": 30,
+      "risk_pct_used": 1
+    },
+    "heat": {
+      "current_pct": 0,
+      "after_pct": 0.99,
+      "limit_pct": 5
+    },
+    "regime": {
+      "state": "buy",
+      "severity": null
+    },
+    "ruleset_id": "mtg_core@1.2"
+  },
+  "requires": [
+    "as_of_now"
+  ],
+  "as_of_now": "2026-09-29T11:00:00Z"
+}

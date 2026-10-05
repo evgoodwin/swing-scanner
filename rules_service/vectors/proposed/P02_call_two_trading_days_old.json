@@ -1,0 +1,73 @@
+{
+  "name": "P02_call_two_trading_days_old",
+  "note": "Wednesday 30 Sep with Monday 28 Sep's call: older than the previous trading day, so NO_TIMING_CALL. Needs as_of_now.",
+  "ruleset": "mtg_core@1.2",
+  "request": {
+    "candidate": {
+      "symbol": "AAPL",
+      "direction": "long",
+      "entry": 182.5,
+      "stop": 176.0,
+      "source": "WD_ALERT",
+      "asset_class": "equity",
+      "sector": "Technology",
+      "timestamp": "2026-09-30T14:00:00Z",
+      "targets": [
+        195
+      ]
+    },
+    "profile": {
+      "account_size": 50000,
+      "risk_pct": 1.0,
+      "risk_pct_a_grade": null,
+      "heat_limit_pct": 5,
+      "max_positions": 4,
+      "open_positions": []
+    },
+    "regime": {
+      "state": "buy",
+      "as_of": "2026-09-28"
+    }
+  },
+  "expected": {
+    "shares": 0,
+    "dollar_risk": 0,
+    "pct_account": 0,
+    "verdict": "NO_TIMING_CALL",
+    "blocks": [
+      {
+        "rule_id": "D-2",
+        "source_ref": "M4-L4-S2-V",
+        "tier": "core",
+        "severity": "block",
+        "message": "There's no current timing call, so nothing is sized until Rick's next call arrives."
+      }
+    ],
+    "size_breakdown": {
+      "formula_shares": 76,
+      "stop_cap_shares": 82,
+      "shield_shares": 82,
+      "computed_shares": 76,
+      "binding_rules": [
+        "A-16"
+      ],
+      "stop_distance_pct": 3.56,
+      "stop_cap_pct": 30,
+      "risk_pct_used": 1
+    },
+    "heat": {
+      "current_pct": 0,
+      "after_pct": 0.99,
+      "limit_pct": 5
+    },
+    "regime": {
+      "state": null,
+      "severity": null
+    },
+    "ruleset_id": "mtg_core@1.2"
+  },
+  "requires": [
+    "as_of_now"
+  ],
+  "as_of_now": "2026-09-30T14:00:00Z"
+}

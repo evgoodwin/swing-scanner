@@ -1,0 +1,11 @@
+--- scripts/replay-golden.orig.js	2026-10-05 18:24:05.930831179 +0000
++++ scripts/replay-golden.js	2026-10-05 18:24:05.978302823 +0000
+@@ -11,7 +11,7 @@
+   const g = JSON.parse(readFileSync(new URL(f, dir), 'utf8'));
+   let got;
+   try {
+-    const res = await fetch(`${url}/check`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(g.request) });
++    const res = await fetch(`${url}/check`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...g.request, as_of_now: g.as_of_now ?? g.request.candidate.timestamp }) });
+     got = await res.json();
+     if (!res.ok) throw new Error(`HTTP ${res.status} ${JSON.stringify(got).slice(0, 200)}`);
+   } catch (e) { console.log(`FAIL ${f}: ${e.message}`); fail++; continue; }

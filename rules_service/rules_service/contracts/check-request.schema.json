@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform.morpheustrading.com/contracts/check-request.schema.json",
+  "title": "POST /check request (platform -> Rulebook service), contract v2.1",
+  "type": "object",
+  "required": [
+    "candidate",
+    "profile",
+    "regime"
+  ],
+  "properties": {
+    "candidate": {
+      "$ref": "candidate.schema.json"
+    },
+    "profile": {
+      "type": "object",
+      "required": [
+        "account_size",
+        "risk_pct",
+        "heat_limit_pct",
+        "max_positions",
+        "open_positions"
+      ],
+      "properties": {
+        "account_size": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "USD"
+        },
+        "risk_pct": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1.0,
+          "description": "Max risk per trade, % of account. Core default 1.0 (A-20)."
+        },
+        "risk_pct_a_grade": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 1.0,
+          "maximum": 1.5,
+          "default": null,
+          "description": "Opt-in personal setting (D-3). Used only when candidate.self_declared_a_grade (or grade A) AND regime is Buy Mode. Null = not opted in."
+        },
+        "heat_limit_pct": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 7,
+          "default": 5,
+          "description": "Personal portfolio heat limit (C-1). Core standard 5. Above 5 only honoured in Buy Mode; in Wait/Sell the engine uses min(this, 5)."
+        },
+        "max_positions": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 4,
+          "description": "A-23b: default 4, warn above 8, hard cap 10."
+        },
+        "open_positions": {
+          "type": "array",
+          "description": "Current open positions, for heat (A-21), sector cap (A-23) and position count. Empty array if none.",
+          "items": {
+            "type": "object",
+            "required": [
+              "symbol",
+              "direction",
+              "shares",
+              "entry",
+              "stop"
+            ],
+            "properties": {
+              "symbol": {
+                "type": "string"
+              },
+              "direction": {
+                "enum": [
+                  "long",
+                  "short"
+                ]
+              },
+              "shares": {
+                "type": "number",
+                "minimum": 0
+              },
+              "entry": {
+                "type": "number"
+              },
+              "stop": {
+                "type": "number"
+              },
+              "sector": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "declared_heat_pct": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 20,
+          "default": null,
+          "description": "Phase 1 stand-in: the trader's current open risk % as they typed it. Used ONLY when open_positions is empty. Replaced by real positions from the Audit in Phase 2."
+        },
+        "declared_open_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 50,
+          "default": null,
+          "description": "Phase 1 stand-in for position count (A-23b), used only when open_positions is empty."
+        }
+      },
+      "additionalProperties": true
+    },
+    "regime": {
+      "type": "object",
+      "required": [
+        "state"
+      ],
+      "description": "The PUBLISHED Market Timing Model call from Rick's tracker. Binary (D-2). The engine computes severity itself and returns it.",
+      "properties": {
+        "state": {
+          "enum": [
+            "buy",
+            "wait",
+            null
+          ]
+        },
+        "as_of": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        }
+      }
+    }
+  }
+}

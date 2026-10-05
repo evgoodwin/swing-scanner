@@ -1,0 +1,83 @@
+{
+  "name": "P05_severe_wait_blocks_and_says_exit",
+  "note": "Wait Mode, severe: Nasdaq below its 50-day with 6 distribution days in 5 weeks (M4-L4-S2, A-1). Block message says to exit open positions (v2.2 item 3). Needs the facts fixture.",
+  "ruleset": "mtg_core@1.2",
+  "request": {
+    "candidate": {
+      "symbol": "AAPL",
+      "direction": "long",
+      "entry": 182.5,
+      "stop": 176.0,
+      "source": "WD_ALERT",
+      "asset_class": "equity",
+      "sector": "Technology",
+      "timestamp": "2026-09-28T13:30:00Z",
+      "targets": [
+        195
+      ]
+    },
+    "profile": {
+      "account_size": 50000,
+      "risk_pct": 1.0,
+      "risk_pct_a_grade": null,
+      "heat_limit_pct": 5,
+      "max_positions": 4,
+      "open_positions": []
+    },
+    "regime": {
+      "state": "wait",
+      "as_of": "2026-09-25"
+    }
+  },
+  "expected": {
+    "shares": 0,
+    "dollar_risk": 0,
+    "pct_account": 0,
+    "verdict": "WAIT_MODE",
+    "blocks": [
+      {
+        "rule_id": "A-2d",
+        "source_ref": "M4-L4-S2-V",
+        "tier": "core",
+        "severity": "block",
+        "message": "The Market Timing Model is in Wait Mode, so no new long entries. Severe conditions: exit open positions."
+      }
+    ],
+    "size_breakdown": {
+      "formula_shares": 76,
+      "stop_cap_shares": 82,
+      "shield_shares": 82,
+      "computed_shares": 76,
+      "binding_rules": [
+        "A-16"
+      ],
+      "stop_distance_pct": 3.56,
+      "stop_cap_pct": 30,
+      "risk_pct_used": 1
+    },
+    "heat": {
+      "current_pct": 0,
+      "after_pct": 0.99,
+      "limit_pct": 5
+    },
+    "regime": {
+      "state": "wait",
+      "severity": "severe"
+    },
+    "ruleset_id": "mtg_core@1.2"
+  },
+  "requires": [
+    "facts_fixture"
+  ],
+  "facts": {
+    "as_of": "2026-09-25",
+    "dominant_index": "^IXIC",
+    "index": {
+      "close": 17100,
+      "ema20": 18050,
+      "sma50": 17600,
+      "dist_days_5wk": 6
+    },
+    "symbols": {}
+  }
+}

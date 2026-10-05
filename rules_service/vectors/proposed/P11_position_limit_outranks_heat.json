@@ -1,0 +1,117 @@
+{
+  "name": "P11_position_limit_outranks_heat",
+  "note": "Same as 029 with the default limit of 4 positions. Both rules block; POSITION_LIMIT wins on precedence, and the A-21 block is still listed. golden.test.js line 68 assumes over-limit always means HEAT_LIMIT; it needs the one-line fix.",
+  "ruleset": "mtg_core@1.2",
+  "smoke_tests": [
+    15
+  ],
+  "request": {
+    "candidate": {
+      "symbol": "TEST",
+      "direction": "long",
+      "entry": 100.0,
+      "stop": 95.0,
+      "source": "WD_ALERT",
+      "asset_class": "equity",
+      "sector": "Technology",
+      "timestamp": "2026-09-28T13:30:00Z",
+      "targets": [
+        115
+      ]
+    },
+    "profile": {
+      "account_size": 100000,
+      "risk_pct": 1.0,
+      "risk_pct_a_grade": null,
+      "heat_limit_pct": 5,
+      "max_positions": 4,
+      "open_positions": [
+        {
+          "symbol": "P0",
+          "direction": "long",
+          "shares": 100,
+          "entry": 100.0,
+          "stop": 88.0,
+          "sector": "Energy"
+        },
+        {
+          "symbol": "P1",
+          "direction": "long",
+          "shares": 100,
+          "entry": 100.0,
+          "stop": 88.0,
+          "sector": "Financials"
+        },
+        {
+          "symbol": "P2",
+          "direction": "long",
+          "shares": 100,
+          "entry": 100.0,
+          "stop": 88.0,
+          "sector": "Industrials"
+        },
+        {
+          "symbol": "P3",
+          "direction": "long",
+          "shares": 100,
+          "entry": 100.0,
+          "stop": 88.0,
+          "sector": "Utilities"
+        }
+      ]
+    },
+    "regime": {
+      "state": "buy",
+      "as_of": "2026-09-25"
+    }
+  },
+  "expected": {
+    "shares": 0,
+    "dollar_risk": 0,
+    "pct_account": 0,
+    "verdict": "POSITION_LIMIT",
+    "blocks": [
+      {
+        "rule_id": "A-23b",
+        "source_ref": "M4-L3-S2-V",
+        "tier": "core",
+        "severity": "block",
+        "message": "This would be position 5; your limit is 4."
+      },
+      {
+        "rule_id": "A-21",
+        "source_ref": "M5-L2-S3-V",
+        "tier": "core",
+        "severity": "block",
+        "message": "This trade would take your open risk to 5.55%, above your 5% limit."
+      }
+    ],
+    "size_breakdown": {
+      "formula_shares": 200,
+      "stop_cap_shares": 150,
+      "shield_shares": 300,
+      "computed_shares": 150,
+      "binding_rules": [
+        "A-17"
+      ],
+      "stop_distance_pct": 5,
+      "stop_cap_pct": 15,
+      "risk_pct_used": 1
+    },
+    "heat": {
+      "current_pct": 4.8,
+      "after_pct": 5.55,
+      "limit_pct": 5,
+      "shares_within_limit": 40
+    },
+    "regime": {
+      "state": "buy",
+      "severity": null
+    },
+    "ruleset_id": "mtg_core@1.2"
+  },
+  "requires": [
+    "convention_confirm",
+    "platform_test_fix"
+  ]
+}

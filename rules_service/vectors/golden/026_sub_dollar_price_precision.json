@@ -1,0 +1,61 @@
+{
+  "name": "026_sub_dollar_price_precision",
+  "note": "Prices are never rounded: entry 0.5432, stop 0.5012, risk 0.0420 a share. Formula 11904 binds; dollar risk $499.97.",
+  "ruleset": "mtg_core@1.2",
+  "request": {
+    "candidate": {
+      "symbol": "XYZ",
+      "direction": "long",
+      "entry": 0.5432,
+      "stop": 0.5012,
+      "source": "WD_ALERT",
+      "asset_class": "equity",
+      "sector": "Health Care",
+      "timestamp": "2026-09-28T13:30:00Z",
+      "targets": [
+        0.62
+      ]
+    },
+    "profile": {
+      "account_size": 50000,
+      "risk_pct": 1.0,
+      "risk_pct_a_grade": null,
+      "heat_limit_pct": 5,
+      "max_positions": 4,
+      "open_positions": []
+    },
+    "regime": {
+      "state": "buy",
+      "as_of": "2026-09-25"
+    }
+  },
+  "expected": {
+    "shares": 11904,
+    "dollar_risk": 499.97,
+    "pct_account": 1,
+    "verdict": "FITS",
+    "blocks": [],
+    "size_breakdown": {
+      "formula_shares": 11904,
+      "stop_cap_shares": 13807,
+      "shield_shares": 27614,
+      "computed_shares": 11904,
+      "binding_rules": [
+        "A-16"
+      ],
+      "stop_distance_pct": 7.73,
+      "stop_cap_pct": 15,
+      "risk_pct_used": 1
+    },
+    "heat": {
+      "current_pct": 0,
+      "after_pct": 1,
+      "limit_pct": 5
+    },
+    "regime": {
+      "state": "buy",
+      "severity": null
+    },
+    "ruleset_id": "mtg_core@1.2"
+  }
+}

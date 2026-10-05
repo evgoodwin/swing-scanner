@@ -1,0 +1,27 @@
+[Unit]
+Description=MTG rules service (Trade Check engine, mtg_core@1.2) on 127.0.0.1:8791
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mtgengine
+Group=mtgengine
+WorkingDirectory=/opt/mtg-engine/rules_service
+EnvironmentFile=/etc/mtg-engine/env
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/mtg-engine/.venv/bin/python run_rules_service.py
+Restart=on-failure
+RestartSec=3
+# Hardening (same pattern as mtg-platform.service)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/mtg-engine
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

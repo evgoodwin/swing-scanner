@@ -1,0 +1,93 @@
+{
+  "name": "P10_locked_profit_stop_counts_zero",
+  "note": "Smoke test 14: AAA risks $200, BBB is at breakeven, CCC is a long with its stop $2 ABOVE entry (profit locked). Ev's engine counts CCC as 0 (current 0.20%). Ruleset v1.2 and golden.test.js use |entry - stop|, which counts CCC as $400 of risk (0.60%). Proposed: a stop past entry on the profit side counts 0, like breakeven. Needs a ruling and a one-line test fix.",
+  "ruleset": "mtg_core@1.2",
+  "smoke_tests": [
+    14
+  ],
+  "request": {
+    "candidate": {
+      "symbol": "TEST",
+      "direction": "long",
+      "entry": 100.0,
+      "stop": 95.0,
+      "source": "WD_ALERT",
+      "asset_class": "equity",
+      "sector": "Technology",
+      "timestamp": "2026-09-28T13:30:00Z",
+      "targets": [
+        115
+      ]
+    },
+    "profile": {
+      "account_size": 100000,
+      "risk_pct": 1.0,
+      "risk_pct_a_grade": null,
+      "heat_limit_pct": 5,
+      "max_positions": 4,
+      "open_positions": [
+        {
+          "symbol": "AAA",
+          "direction": "long",
+          "shares": 100,
+          "entry": 50.0,
+          "stop": 48.0,
+          "sector": "Energy"
+        },
+        {
+          "symbol": "BBB",
+          "direction": "long",
+          "shares": 50,
+          "entry": 80.0,
+          "stop": 80.0,
+          "sector": "Financials"
+        },
+        {
+          "symbol": "CCC",
+          "direction": "long",
+          "shares": 200,
+          "entry": 20.0,
+          "stop": 22.0,
+          "sector": "Industrials"
+        }
+      ]
+    },
+    "regime": {
+      "state": "buy",
+      "as_of": "2026-09-25"
+    }
+  },
+  "expected": {
+    "shares": 150,
+    "dollar_risk": 750,
+    "pct_account": 0.75,
+    "verdict": "FITS",
+    "blocks": [],
+    "size_breakdown": {
+      "formula_shares": 200,
+      "stop_cap_shares": 150,
+      "shield_shares": 300,
+      "computed_shares": 150,
+      "binding_rules": [
+        "A-17"
+      ],
+      "stop_distance_pct": 5,
+      "stop_cap_pct": 15,
+      "risk_pct_used": 1
+    },
+    "heat": {
+      "current_pct": 0.2,
+      "after_pct": 0.95,
+      "limit_pct": 5
+    },
+    "regime": {
+      "state": "buy",
+      "severity": null
+    },
+    "ruleset_id": "mtg_core@1.2"
+  },
+  "requires": [
+    "ruling",
+    "platform_test_fix"
+  ]
+}

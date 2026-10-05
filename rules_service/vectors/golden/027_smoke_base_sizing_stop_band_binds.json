@@ -1,0 +1,67 @@
+{
+  "name": "027_smoke_base_sizing_stop_band_binds",
+  "note": "Smoke tests 6-9: $100k, entry 100, stop 95, Buy. Formula gives 200 shares, but the stop is exactly 5% from entry, so the 15% allocation band (A-17, D-4) caps it at 150. swing_risk returns 200 because it predates the stop-distance cap. R/R 3:1 is not checked by /check (A-13 pending, not blocking).",
+  "ruleset": "mtg_core@1.2",
+  "smoke_tests": [
+    6,
+    7,
+    8,
+    9
+  ],
+  "request": {
+    "candidate": {
+      "symbol": "TEST",
+      "direction": "long",
+      "entry": 100.0,
+      "stop": 95.0,
+      "source": "WD_ALERT",
+      "asset_class": "equity",
+      "sector": "Technology",
+      "timestamp": "2026-09-28T13:30:00Z",
+      "targets": [
+        115
+      ]
+    },
+    "profile": {
+      "account_size": 100000,
+      "risk_pct": 1.0,
+      "risk_pct_a_grade": null,
+      "heat_limit_pct": 5,
+      "max_positions": 4,
+      "open_positions": []
+    },
+    "regime": {
+      "state": "buy",
+      "as_of": "2026-09-25"
+    }
+  },
+  "expected": {
+    "shares": 150,
+    "dollar_risk": 750,
+    "pct_account": 0.75,
+    "verdict": "FITS",
+    "blocks": [],
+    "size_breakdown": {
+      "formula_shares": 200,
+      "stop_cap_shares": 150,
+      "shield_shares": 300,
+      "computed_shares": 150,
+      "binding_rules": [
+        "A-17"
+      ],
+      "stop_distance_pct": 5,
+      "stop_cap_pct": 15,
+      "risk_pct_used": 1
+    },
+    "heat": {
+      "current_pct": 0,
+      "after_pct": 0.75,
+      "limit_pct": 5
+    },
+    "regime": {
+      "state": "buy",
+      "severity": null
+    },
+    "ruleset_id": "mtg_core@1.2"
+  }
+}
